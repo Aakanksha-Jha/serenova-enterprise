@@ -50,15 +50,23 @@ class SerenovaEAPAgent:
         ]
 
         # 3. Direct HTTP request straight to Cerebras (bypassing SDK mapping bugs)
+        import streamlit as st
+        import os
         import requests
-        
+
+        raw_key = st.secrets.get("GROQ_API_KEY", os.getenv("GROQ_API_KEY", ""))
+        api_key = str(raw_key).strip()
+
+        # Build clean OpenRouter compliant headers
         headers = {
-            "Authorization": f"Bearer {Config.GROQ_API_KEY}", 
-            "Content-Type": "application/json"
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+            "HTTP-Referer": "https://streamlit.app", # Required by OpenRouter
+            "X-Title": "Serenova Enterprise"
         }
         
         payload = {
-            "model": "gpt-oss-120b", # Explicit Cerebras model ID
+            "model": "openai/gpt-oss-120b:free", # High-reasoning free tier model
             "messages": messages,
             "max_tokens": 512,
             "temperature": 0.7
@@ -66,7 +74,7 @@ class SerenovaEAPAgent:
 
         try:
             response = requests.post(
-                "https://api.cerebras.ai/v1/chat/completions",
+                "https://openrouter.ai/api/v1/chat/completions",
                 json=payload,
                 headers=headers
             )
