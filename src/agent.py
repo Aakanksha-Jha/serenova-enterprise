@@ -5,9 +5,11 @@ from hindsight_client import HindsightMemoryClient
 class SerenovaEAPAgent:
     def __init__(self):
         Config.validate()
-        self.llm_client = Groq(api_key=Config.GROQ_API_KEY)
+        self.llm_client = Groq(
+            api_key=Config.GROQ_API_KEY,
+            base_url="https://api.cerebras.ai/v1"
+        )
         self.memory_layer = HindsightMemoryClient()
-
     def _get_system_prompt(self, historical_context: str) -> str:
         base_prompt = (
             "You are Serenova, an elite corporate EAP (Employee Assistance Program) AI companion.\n"
