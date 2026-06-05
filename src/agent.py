@@ -53,8 +53,8 @@ class SerenovaEAPAgent:
         import requests
         
         headers = {
-            "Authorization": f"Bearer {Config.GROQ_API_KEY}", # Uses your csk- key
-            "Content-Type": application/json"
+            "Authorization": f"Bearer {Config.GROQ_API_KEY}", 
+            "Content-Type": "application/json"
         }
         
         payload = {
