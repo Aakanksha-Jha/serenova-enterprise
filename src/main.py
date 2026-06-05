@@ -1,5 +1,5 @@
 import time
-from src.agent import SerenovaEAPAgent
+from agent import SerenovaEAPAgent
 
 def run_hackathon_demo_simulation():
     print("=========================================================================")

@@ -1,6 +1,6 @@
 from groq import Groq
-from src.config import Config
-from src.hindsight_client import HindsightMemoryClient
+from config import Config
+from hindsight_client import HindsightMemoryClient
 
 class SerenovaEAPAgent:
     def __init__(self):
