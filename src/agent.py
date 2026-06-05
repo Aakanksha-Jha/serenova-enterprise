@@ -33,32 +33,48 @@ class SerenovaEAPAgent:
             
         return base_prompt
 
-    def interact(self, user_token: str, user_message: str) -> str:
-        # Step 1: Query Hindsight to bring past sessions into context
-        historical_context = self.memory_layer.recall_historical_context(user_token, user_message)
-        
-        # Step 2: Formulate dynamic prompt payload for LLM execution
-        system_instructions = self._get_system_prompt(historical_context)
-        
+    def interact(self, worker_token: str, user_message: str) -> str:
+        # 1. Fetch relevant memory context using your existing hindsight client
+        context = ""
+        try:
+            memories = self.memory_layer.query_memory(worker_token, user_message)
+            if memories:
+                context = "\n".join([m.get("text", "") for m in memories])
+        except Exception as e:
+            print(f"Memory layer retrieval skipped: {e}")
+
+        # 2. Build the message array
         messages = [
-            {"role": "system", "content": system_instructions},
+            {"role": "system", "content": f"You are Serenova, a secure corporate EAP wellness agent. Help the user manage stress. Relevant past context:\n{context}"},
             {"role": "user", "content": user_message}
         ]
+
+        # 3. Direct HTTP request straight to Cerebras (bypassing SDK mapping bugs)
+        import requests
         
-        # Step 3: Run Inference through Groq
-        chat_completion = self.llm_client.chat.completions.create(
-            messages=messages,
-            model=Config.LLM_MODEL,
-            temperature=0.7,
-            max_tokens=512
-        )
+        headers = {
+            "Authorization": f"Bearer {Config.GROQ_API_KEY}", # Uses your csk- key
+            "Content-Type": application/json"
+        }
         
-        agent_response = chat_completion.choices[0].message.content
-        
-        # Step 4: Background Thread/Asynchronous Summary extraction to update Hindsight memory
-        self._update_hindsight_pipeline(user_token, user_message, agent_response)
-        
-        return agent_response
+        payload = {
+            "model": "gpt-oss-120b", # Explicit Cerebras model ID
+            "messages": messages,
+            "max_tokens": 512,
+            "temperature": 0.7
+        }
+
+        try:
+            response = requests.post(
+                "https://api.cerebras.ai/v1/chat/completions",
+                json=payload,
+                headers=headers
+            )
+            response.raise_for_status()
+            result_json = response.json()
+            return result_json["choices"][0]["message"]["content"]
+        except Exception as e:
+            return f"Inference Error: {str(e)}. Please check your Streamlit secrets setup."
 
     def _update_hindsight_pipeline(self, user_token: str, user_message: str, agent_response: str):
         """
